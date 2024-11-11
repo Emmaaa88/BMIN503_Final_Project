@@ -14,13 +14,15 @@ Use this template to complete your project throughout the course. Your Final Pro
 
 ## Overview {#sec-overview}
 
-Give a brief a description of your project and its goal(s), what data you are using to complete it, and what two faculty/staff in different fields you have spoken to about your project with a brief summary of what you learned from each person. Include a link to your final project GitHub repository.
+My project is **Lung Cancer Detection based on Machine Learning and Image Analysis**, which aims to improve the diagnostic efficiency by assisting doctors in identifying lung cancer through CT scan images. Convolutional neural network models such as U-Net for image segmentation and ResNet for classification are used in the project to predict whether a detected nodule is benign or malignant. The main performance metrics of the model include accuracy and AUC, which has currently achieved xx accuracy and xx AUC, significantly reducing the areas that need to be reviewed by the physician, thus speeding up the diagnostic process.
+
+The data for the project comes from Kaggle's publicly available lung cancer CT scan dataset, which contains basic patient information, lifestyle factors, and scan images. I spoke with Dr. Mowery and Dr. Fan, who emphasized the importance of reducing the false-positive rate and provided clinical knowledge about key risk factors to help optimize early lung cancer diagnosis, and Dr. Mowery, who suggested integrating image data and clinical text annotations and proposed technical ideas for combining visual and non-visual data to improve prediction accuracy. I combined their claims of having made predictions with data and evaluated the predictions.
+
+\[Link to repo\](https://github.com/Emmaaa88/BMIN503_Final_Project.git)
 
 ## Introduction {#sec-introduction}
 
-Describe the problem addressed, its significance, and some background to motivate the problem. This should extend what is in the @sec-overview.
-
-Explain why your problem is interdisciplinary, what fields can contribute to its understanding, and incorporate background related to what you learned from meeting with faculty/staff.
+Lung cancer is one of the leading causes of cancer-related deaths globally and is usually detected at an advanced stage, resulting in limited treatment options. Early detection can significantly improve survival rates, but current diagnostic methods rely on extensive manual review of CT scan images by radiologists, a process that is both time-consuming and susceptible to subjective factors. The aim of this project is to develop a machine learning model to aid in the early diagnosis of lung cancer, with the goal of reducing false positives and improving diagnostic efficiency, thereby supporting clinicians. The project is inherently interdisciplinary, incorporating knowledge from oncology and machine learning. Oncologists provided insights into cancer progression, risk factors, and diagnostic challenges, while machine learning experts provided methods for model selection, data enhancement, and multimodal data integration.
 
 ## Methods {#sec-methods}
 
