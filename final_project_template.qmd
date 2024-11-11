@@ -26,6 +26,151 @@ I spoke with Dr. Mowery and Dr. Fan, who emphasized the importance of reducing t
 
 Describe the data used and general methodological approach used to address the problem described in the @sec-introduction. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why.
 
+```{r}
+library(keras)
+library(tensorflow)
+library(ggplot2)
+library(dplyr)
+library(caret)
+
+tensorflow::install_tensorflow()
+tensorflow::set_random_seed(1234)
+
+```
+
+```{r}
+batch_size <- 64
+img_size <- c(224, 224)
+channels <- 3
+class_count <- 5
+
+data_dir <- "lung_colon_image_set"
+filepaths <- list.files(data_dir, recursive = TRUE, full.names = TRUE)
+labels <- basename(dirname(filepaths))
+contents <- list.files(data_dir)
+print(contents)
+```
+
+```{r}
+folds <- list.files(data_dir, full.names = TRUE)
+print(folds)
+for (fold in folds) {
+  flist <- list.files(fold, full.names = TRUE)
+
+  
+  for (f_path in flist) {
+    filelist <- list.files(f_path, full.names = TRUE)
+
+    
+    for (file in filelist) {
+      filepaths <- c(filepaths, file)
+      
+      label <- switch(basename(f_path),
+                      'colon_aca' = 'Colon Adenocarcinoma',
+                      'colon_n' = 'Colon Benign Tissue',
+                      'lung_aca' = 'Lung Adenocarcinoma',
+                      'lung_n' = 'Lung Benign Tissue',
+                      'lung_scc' = 'Lung Squamous Cell Carcinoma',
+                      NA)
+      
+      labels <- c(labels, label)
+    }
+  }
+}
+
+df <- data.frame(filepaths = filepaths, labels = labels, stringsAsFactors = FALSE)
+df <- na.omit(df)
+
+```
+
+```{r}
+print(head(df, 10))
+
+```
+
+```{r}
+library(keras)
+library(caret)
+library(tensorflow)
+install_tensorflow()
+
+```
+
+```{r}
+
+library(reticulate)
+py_config()
+reticulate::virtualenv_install(envname = "r-tensorflow", packages = "pandas")
+
+```
+
+```{r}
+library(keras)
+library(tensorflow)
+library(caret)
+
+tensorflow::use_virtualenv("r-tensorflow", required = TRUE)
+
+
+set.seed(123)
+
+trainIndex <- createDataPartition(df$labels, p = 0.8, list = FALSE)
+train_df <- df[trainIndex, ]
+dummy_df <- df[-trainIndex, ]
+
+validIndex <- createDataPartition(dummy_df$labels, p = 0.5, list = FALSE)
+valid_df <- dummy_df[validIndex, ]
+test_df <- dummy_df[-validIndex, ]
+
+batch_size <- 64
+img_size <- c(224, 224)
+channels <- 3
+
+train_gen <- image_data_generator(rescale = 1/255)
+test_gen <- image_data_generator(rescale = 1/255)
+
+train_images <- flow_images_from_dataframe(
+  dataframe = train_df, 
+  x_col = "filepaths", 
+  y_col = "labels", 
+  generator = train_gen, 
+  target_size = img_size, 
+  class_mode = "categorical", 
+  color_mode = "rgb", 
+  shuffle = TRUE, 
+  batch_size = batch_size
+)
+
+valid_images <- flow_images_from_dataframe(
+  dataframe = valid_df, 
+  x_col = "filepaths", 
+  y_col = "labels", 
+  generator = test_gen, 
+  target_size = img_size, 
+  class_mode = "categorical", 
+  color_mode = "rgb", 
+  shuffle = TRUE, 
+  batch_size = batch_size
+)
+
+test_images <- flow_images_from_dataframe(
+  dataframe = test_df, 
+  x_col = "filepaths", 
+  y_col = "labels", 
+  generator = test_gen, 
+  target_size = img_size, 
+  class_mode = "categorical", 
+  color_mode = "rgb", 
+  shuffle = FALSE, 
+  batch_size = batch_size
+)
+
+```
+
+```{r}
+
+```
+
 ## Results {#sec-results}
 
 Describe your results and include relevant tables, plots, and code/comments used to obtain them. You may refer to the @sec-methods as needed. End with a brief conclusion of your findings related to the question you set out to address. You can include references if you'd like, but this is not required.
