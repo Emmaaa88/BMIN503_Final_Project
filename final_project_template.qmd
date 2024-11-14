@@ -27,181 +27,77 @@ I spoke with Dr. Mowery and Dr. Fan, who emphasized the importance of reducing t
 Describe the data used and general methodological approach used to address the problem described in the @sec-introduction. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why.
 
 ```{r}
-library(keras)
-library(tensorflow)
-library(ggplot2)
 library(dplyr)
-library(caret)
-
-tensorflow::install_tensorflow()
-tensorflow::set_random_seed(1234)
-
-```
-
-```{r}
-batch_size <- 64
-img_size <- c(224, 224)
-channels <- 3
-class_count <- 5
-
-data_dir <- "lung_colon_image_set"
-filepaths <- list.files(data_dir, recursive = TRUE, full.names = TRUE)
-labels <- basename(dirname(filepaths))
-contents <- list.files(data_dir)
-print(contents)
-```
-
-```{r}
-folds <- list.files(data_dir, full.names = TRUE)
-print(folds)
-for (fold in folds) {
-  flist <- list.files(fold, full.names = TRUE)
-
-  
-  for (f_path in flist) {
-    filelist <- list.files(f_path, full.names = TRUE)
-
-    
-    for (file in filelist) {
-      filepaths <- c(filepaths, file)
-      
-      label <- switch(basename(f_path),
-                      'colon_aca' = 'Colon Adenocarcinoma',
-                      'colon_n' = 'Colon Benign Tissue',
-                      'lung_aca' = 'Lung Adenocarcinoma',
-                      'lung_n' = 'Lung Benign Tissue',
-                      'lung_scc' = 'Lung Squamous Cell Carcinoma',
-                      NA)
-      
-      labels <- c(labels, label)
-    }
-  }
-}
-
-df <- data.frame(filepaths = filepaths, labels = labels, stringsAsFactors = FALSE)
-df <- na.omit(df)
-
-```
-
-```{r}
-print(head(df, 10))
-
-```
-
-```{r}
-library(keras)
-library(caret)
-library(tensorflow)
-install_tensorflow()
-
-```
-
-```{r}
-
-library(reticulate)
-py_config()
-reticulate::virtualenv_install(envname = "r-tensorflow", packages = "pandas")
-
-```
-
-```{r}
-library(keras)
-library(tensorflow)
-library(caret)
-
-tensorflow::use_virtualenv("r-tensorflow", required = TRUE)
-
-
-set.seed(123)
-
-trainIndex <- createDataPartition(df$labels, p = 0.8, list = FALSE)
-train_df <- df[trainIndex, ]
-dummy_df <- df[-trainIndex, ]
-
-validIndex <- createDataPartition(dummy_df$labels, p = 0.5, list = FALSE)
-valid_df <- dummy_df[validIndex, ]
-test_df <- dummy_df[-validIndex, ]
-
-batch_size <- 64
-img_size <- c(224, 224)
-channels <- 3
-
-train_gen <- image_data_generator(rescale = 1/255)
-test_gen <- image_data_generator(rescale = 1/255)
-
-train_images <- flow_images_from_dataframe(
-  dataframe = train_df, 
-  x_col = "filepaths", 
-  y_col = "labels", 
-  generator = train_gen, 
-  target_size = img_size, 
-  class_mode = "categorical", 
-  color_mode = "rgb", 
-  shuffle = TRUE, 
-  batch_size = batch_size
-)
-
-valid_images <- flow_images_from_dataframe(
-  dataframe = valid_df, 
-  x_col = "filepaths", 
-  y_col = "labels", 
-  generator = test_gen, 
-  target_size = img_size, 
-  class_mode = "categorical", 
-  color_mode = "rgb", 
-  shuffle = TRUE, 
-  batch_size = batch_size
-)
-
-test_images <- flow_images_from_dataframe(
-  dataframe = test_df, 
-  x_col = "filepaths", 
-  y_col = "labels", 
-  generator = test_gen, 
-  target_size = img_size, 
-  class_mode = "categorical", 
-  color_mode = "rgb", 
-  shuffle = FALSE, 
-  batch_size = batch_size
-)
-
-```
-
-```{r}
-library(keras)
 library(ggplot2)
-library(gridExtra)
+library(readr)
 
-g_dict <- train_images$class_indices
-classes <- names(g_dict)
+options(warn = -1)
 
+df <- read_csv('survey lung cancer.csv')
+
+print(df)
+```
+
+**Note: In this dataset, YES=2 & NO=1**
+
+```{r}
+dim(df)
+
+#Checking for Duplicates
+sum(duplicated(df))
+#Removing Duplicates
+df <- df[!duplicated(df), ]
+
+#Checking for null values
+colSums(is.na(df))
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+# View descriptive statistics
+summary(df)
+```
+
+```{r}
+names(df) <- trimws(names(df))
+print(names(df))
+```
+
+```{r}
+df$GENDER <- as.numeric(factor(df$GENDER)) - 1
+df$LUNG_CANCER <- as.numeric(factor(df$LUNG_CANCER)) - 1
+df$SMOKING <- as.numeric(factor(df$SMOKING)) - 1
+df$YELLOW_FINGERS <- as.numeric(factor(df$YELLOW_FINGERS)) - 1
+df$ANXIETY <- as.numeric(factor(df$ANXIETY)) - 1
+df$PEER_PRESSURE <- as.numeric(factor(df$PEER_PRESSURE)) - 1
+df$`CHRONIC DISEASE` <- as.numeric(factor(df$`CHRONIC DISEASE`)) - 1
+df$FATIGUE <- as.numeric(factor(df$FATIGUE)) - 1
+df$ALLERGY <- as.numeric(factor(df$ALLERGY)) - 1
+df$WHEEZING <- as.numeric(factor(df$WHEEZING)) - 1
+df$`ALCOHOL CONSUMING` <- as.numeric(factor(df$`ALCOHOL CONSUMING`)) - 1
+df$COUGHING <- as.numeric(factor(df$COUGHING)) - 1
+df$`SHORTNESS OF BREATH` <- as.numeric(factor(df$`SHORTNESS OF BREATH`)) - 1
+df$`SWALLOWING DIFFICULTY` <- as.numeric(factor(df$`SWALLOWING DIFFICULTY`)) - 1
+df$`CHEST PAIN` <- as.numeric(factor(df$`CHEST PAIN`)) - 1
+
+df
 
 ```
 
 ```{r}
-library(reticulate)
-reticulate::virtualenv_install(envname = "r-tensorflow", packages = "Pillow")
-
-# 确认是否可以成功导入 PIL
-py_run_string("from PIL import Image")
+str(df)
 ```
 
 ```{r}
-batch <- generator_next(train_images)
-images <- batch[[1]]
-labels <- batch[[2]]
-
-par(mfrow = c(4, 4), mar = c(1, 1, 1, 1))
-
-for (i in 1:16) {
-  image <- images[i, , , ] / 255
-  label_index <- which.max(labels[i, ])
-  class_name <- classes[label_index]
-  
-  plot(as.raster(image), main = class_name, axes = FALSE)
-  title(class_name, col.main = "blue", cex.main = 1.2)
-}
-
+ggplot(df, aes(x = as.factor(LUNG_CANCER), fill = as.factor(LUNG_CANCER))) +
+  geom_bar() +
+  scale_fill_manual(values = c("#0073C2FF", "#EFC000FF")) +
+  labs(title = "Target Distribution", x = "LUNG_CANCER", y = "Count") +
+  theme_minimal() +
+  theme(legend.position = "none")
 ```
 
 ## Results {#sec-results}
