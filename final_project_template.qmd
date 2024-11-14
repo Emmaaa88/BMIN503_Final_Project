@@ -168,6 +168,39 @@ test_images <- flow_images_from_dataframe(
 ```
 
 ```{r}
+library(keras)
+library(ggplot2)
+library(gridExtra)
+
+g_dict <- train_images$class_indices
+classes <- names(g_dict)
+
+
+```
+
+```{r}
+library(reticulate)
+reticulate::virtualenv_install(envname = "r-tensorflow", packages = "Pillow")
+
+# 确认是否可以成功导入 PIL
+py_run_string("from PIL import Image")
+```
+
+```{r}
+batch <- generator_next(train_images)
+images <- batch[[1]]
+labels <- batch[[2]]
+
+par(mfrow = c(4, 4), mar = c(1, 1, 1, 1))
+
+for (i in 1:16) {
+  image <- images[i, , , ] / 255
+  label_index <- which.max(labels[i, ])
+  class_name <- classes[label_index]
+  
+  plot(as.raster(image), main = class_name, axes = FALSE)
+  title(class_name, col.main = "blue", cex.main = 1.2)
+}
 
 ```
 
