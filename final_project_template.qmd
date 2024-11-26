@@ -100,6 +100,116 @@ ggplot(df, aes(x = as.factor(LUNG_CANCER), fill = as.factor(LUNG_CANCER))) +
   theme(legend.position = "none")
 ```
 
+```{r}
+# 查看 LUNG_CANCER 的计数分布
+table(df$LUNG_CANCER)
+
+# 定义绘图函数
+plot_distribution <- function(col_name, df) {
+  library(ggplot2)
+  
+  ggplot(df, aes(x = as.factor(get(col_name)), fill = as.factor(LUNG_CANCER))) +
+    geom_bar(position = "fill", stat = "count") +
+    scale_fill_manual(values = c("#0073C2FF", "#EFC000FF")) +  # 设置颜色
+    labs(
+      title = paste("Distribution of LUNG_CANCER by", col_name),
+      x = col_name,
+      y = "Proportion"
+    ) +
+    theme_minimal()
+}
+
+# 对各列绘图
+plot_distribution("GENDER", df)
+plot_distribution("AGE", df)
+plot_distribution("SMOKING", df)
+plot_distribution("YELLOW_FINGERS", df)
+plot_distribution("ANXIETY", df)
+plot_distribution("PEER_PRESSURE", df)
+plot_distribution("CHRONIC DISEASE", df)
+plot_distribution("FATIGUE", df)
+plot_distribution("ALLERGY", df)
+plot_distribution("WHEEZING", df)
+plot_distribution("ALCOHOL CONSUMING", df)
+plot_distribution("COUGHING", df)
+plot_distribution("SHORTNESS OF BREATH", df)
+plot_distribution("SWALLOWING DIFFICULTY", df)
+plot_distribution("CHEST PAIN", df)
+# Based on the visualizations, it is evident that the features GENDER, AGE, SMOKING, and SHORTNESS OF BREATH show minimal correlation with LUNG CANCER in the dataset. Therefore, we can remove these features to streamline and refine the dataset.
+```
+
+```{r}
+# 删除指定的列
+df_new <- df %>% select(-GENDER, -AGE, -SMOKING, -`SHORTNESS OF BREATH`)
+# 替换列名中的空格为下划线
+names(df_new) <- gsub(" ", "_", names(df_new))
+
+# 检查标准化后的列名
+print(names(df_new))
+
+# 查看新的数据框
+print(df_new)
+
+```
+
+```{r}
+# 加载必要的库
+library(ggplot2)
+library(reshape2)
+library(corrplot)
+
+# 筛选数值型列
+df_numeric <- df_new[, sapply(df_new, is.numeric)]
+
+# 计算相关矩阵
+cn <- cor(df_numeric, use = "complete.obs")
+
+# 查看相关矩阵
+print(cn)
+
+corrplot(cn, method = "color", col = colorRampPalette(c("blue", "white", "red"))(200),
+         type = "full", 
+         addCoef.col = "black",  # 显示相关系数数字
+         number.cex = 0.4,       # 缩小格子内数字的字体大小
+         tl.cex = 0.2,           # 缩小行列标签的字体大小
+         tl.col = "black", 
+         title = "Correlation Matrix")
+
+# 筛选相关系数 >= 0.40
+kot <- cn
+kot[abs(kot) < 0.40] <- NA  # 将不满足条件的值设置为 NA
+
+# 绘制筛选后的相关热图
+corrplot(kot, method = "color", col = colorRampPalette(c("white", "blue"))(200),
+         na.label = " ", type = "full", tl.cex = 0.8, tl.col = "black", title = "Filtered Correlation Matrix")
+
+```
+
+```{r}
+# 将相关矩阵转为长格式
+cn_melted <- melt(cn)
+
+# 绘制完整的热图
+ggplot(data = cn_melted, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Correlation Matrix", fill = "Correlation")
+
+# 筛选相关系数 >= 0.40
+cn_melted_filtered <- cn_melted %>% filter(value >= 0.40 | value <= -0.40)
+
+# 绘制筛选后的热图
+ggplot(data = cn_melted_filtered, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "blue") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Filtered Correlation Matrix", fill = "Correlation")
+
+```
+
 ## Results {#sec-results}
 
 Describe your results and include relevant tables, plots, and code/comments used to obtain them. You may refer to the @sec-methods as needed. End with a brief conclusion of your findings related to the question you set out to address. You can include references if you'd like, but this is not required.
