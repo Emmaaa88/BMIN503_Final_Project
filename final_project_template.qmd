@@ -164,29 +164,23 @@ YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive
 ```{r}
 library(caret)
 
-# 创建新变量
 df_new$ANXYELFIN <- df_new$ANXIETY * df_new$YELLOW_FINGERS
 print(df_new)
 
-# 分割数据集为特征和目标变量
 X <- df_new[, !(names(df_new) %in% c("LUNG_CANCER"))]
 y <- df_new$LUNG_CANCER
 
-# 检查目标变量分布
 print(table(y))
 
-# 数据集划分为训练集、验证集和测试集
-set.seed(42)  # 确保结果可复现
+set.seed(42)
 
-# 首先划分训练集和临时集
 train_index <- createDataPartition(y, p = 0.7, list = FALSE)
 X_train <- X[train_index, ]
 y_train <- y[train_index]
 X_temp <- X[-train_index, ]
 y_temp <- y[-train_index]
 
-# 在临时集中划分验证集和测试集
-set.seed(42)  # 确保结果一致
+set.seed(42)
 val_test_index <- createDataPartition(y_temp, p = 0.5, list = FALSE)
 X_val <- X_temp[val_test_index, ]
 y_val <- y_temp[val_test_index]

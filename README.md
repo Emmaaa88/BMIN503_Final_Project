@@ -1,19 +1,33 @@
-# BMIN503/EPID600 Final Project
+# BMIN503/EPID600 Final Project - Yue Cao
 
-This repository contains templates for the final written report and GitHub repository. Follow the instructions below to clone this repository, and then turn in your final project's code via a pull request to this repository.
+This README serves as a guide for navigating and understanding the code and documentation provided in the project.
 
-1. To start, **fork** this BMIN503_Final_Project repository.
-1. **Clone** the forked repository to your computer.
-1. Modify the files provided, add your own, and **commit** changes to complete your final project.
-1. **Push**/sync the changes up to your GitHub account.
-1. Create a **pull request** on this, the original BMIN503_Final_Project, repository to turn in your final project.
+---
 
+## Overview
 
-Follow the instructions [here][forking] if you are unsure what the above steps mean.
+The project aims to develop a machine learning-based lung cancer detection system leveraging CT scan images to assist physicians in identifying potentially malignant nodules. The key goals are to:
 
-DUE DATE FOR FINAL VERSION: 12/13/24 11:59PM. This is a hard deadline. Turn in whatever you have by this date.
+1. **Reduce false-positive rates** in cancer detection.
+2. **Enhance diagnostic accuracy and efficiency.**
+3. Support **early lung cancer diagnosis**, reducing physicians' workload.
 
+---
 
-<!-- Links -->
-[forking]: https://guides.github.com/activities/forking/
+## Structure
 
+### **1. Introduction**
+- Discusses the problem scope, background, and objectives.
+- Emphasizes interdisciplinary collaboration with clinical insights from Dr. Mowery and Dr. Fan.
+
+### **2. Methods**
+- **Data Preprocessing**: Steps taken to clean and encode data.
+- **Feature Engineering**: Identification of relevant features for model building.
+- **Models**: Logistic regression, Decision Trees, and Random Forests implemented and evaluated.
+
+### **3. Results**
+- Presentation of model performance on validation and test datasets.
+- Includes metrics such as confusion matrices, accuracy, and feature correlations.
+
+### **4. Conclusion**
+- Summarizes findings and addresses project objectives.
