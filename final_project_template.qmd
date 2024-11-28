@@ -156,35 +156,116 @@ corrplot(cn, method = "color", col = colorRampPalette(c("blue", "white", "red"))
          addCoef.col = "black",
          number.cex = 0.4,
          tl.cex = 0.2,
-         tl.col = "black", 
-         title = "Correlation Matrix")
+         tl.col = "black")
+```
 
-kot <- cn
-kot[abs(kot) < 0.40] <- NA
+YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive correlation. None of the other positive correlations are as high. For example, FATIGUE and CHRONIC_DISEASE have a correlation of -0.10, which is hardly linear. Most of the correlations between the variables are close to 0, which suggests that the variables may be independent or have a non-linear relationship.
 
-corrplot(kot, method = "color", col = colorRampPalette(c("white", "blue"))(200),
-         na.label = " ", type = "full", tl.cex = 0.8, tl.col = "black", title = "Filtered Correlation Matrix")
+```{r}
+library(caret)
+
+# 创建新变量
+df_new$ANXYELFIN <- df_new$ANXIETY * df_new$YELLOW_FINGERS
+print(df_new)
+
+# 分割数据集为特征和目标变量
+X <- df_new[, !(names(df_new) %in% c("LUNG_CANCER"))]
+y <- df_new$LUNG_CANCER
+
+# 检查目标变量分布
+print(table(y))
+
+# 数据集划分为训练集、验证集和测试集
+set.seed(42)  # 确保结果可复现
+
+# 首先划分训练集和临时集
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+X_train <- X[train_index, ]
+y_train <- y[train_index]
+X_temp <- X[-train_index, ]
+y_temp <- y[-train_index]
+
+# 在临时集中划分验证集和测试集
+set.seed(42)  # 确保结果一致
+val_test_index <- createDataPartition(y_temp, p = 0.5, list = FALSE)
+X_val <- X_temp[val_test_index, ]
+y_val <- y_temp[val_test_index]
+X_test <- X_temp[-val_test_index, ]
+y_test <- y_temp[-val_test_index]
+
+cat("Training set size: ", dim(X_train)[1], "\n")
+cat("Validation set size: ", dim(X_val)[1], "\n")
+cat("Test set size: ", dim(X_test)[1], "\n")
 
 ```
 
 ```{r}
-cn_melted <- melt(cn)
+train_data <- data.frame(y_train, X_train)
+val_data <- data.frame(y_val, X_val)
+test_data <- data.frame(y_test, X_test)
 
-ggplot(data = cn_melted, aes(Var1, Var2, fill = value)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1, 1)) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-  labs(title = "Correlation Matrix", fill = "Correlation")
+lr_model <- glm(y_train ~ ., data = train_data, family = binomial)
 
-cn_melted_filtered <- cn_melted %>% filter(value >= 0.40 | value <= -0.40)
+summary(lr_model)
 
-ggplot(data = cn_melted_filtered, aes(Var1, Var2, fill = value)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient(low = "white", high = "blue") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
-  labs(title = "Filtered Correlation Matrix", fill = "Correlation")
+y_val_pred <- predict(lr_model, newdata = val_data, type = "response")
+y_val_pred <- ifelse(y_val_pred > 0.5, 1, 0)
+
+confusion_matrix_val <- confusionMatrix(as.factor(y_val_pred), as.factor(y_val))
+cat("\nValidation Set Performance:\n")
+print(confusion_matrix_val)
+
+y_test_pred <- predict(lr_model, newdata = test_data, type = "response")
+y_test_pred <- ifelse(y_test_pred > 0.5, 1, 0)
+
+confusion_matrix_test <- confusionMatrix(as.factor(y_test_pred), as.factor(y_test))
+cat("\nTest Set Performance:\n")
+print(confusion_matrix_test)
+```
+
+```{r}
+library(rpart)
+library(caret)
+
+tree_model <- rpart(y_train ~ ., data = data.frame(y_train, X_train), method = "class")
+
+y_val_pred_tree <- predict(tree_model, newdata = data.frame(X_val), type = "class")
+confusion_matrix_val_tree <- confusionMatrix(y_val_pred_tree, as.factor(y_val))
+cat("\nValidation Set Performance (Decision Tree):\n")
+print(confusion_matrix_val_tree)
+
+y_test_pred_tree <- predict(tree_model, newdata = data.frame(X_test), type = "class")
+confusion_matrix_test_tree <- confusionMatrix(y_test_pred_tree, as.factor(y_test))
+cat("\nTest Set Performance (Decision Tree):\n")
+print(confusion_matrix_test_tree)
+
+```
+
+```{r}
+library(randomForest)
+library(caret)
+
+y_train <- factor(y_train, levels = c(0, 1))
+y_val <- factor(y_val, levels = c(0, 1))
+y_test <- factor(y_test, levels = c(0, 1))
+
+rf_model <- randomForest(y_train ~ ., data = data.frame(y_train, X_train), ntree = 100)
+
+y_val_pred_rf <- predict(rf_model, newdata = data.frame(X_val))
+
+y_val_pred_rf <- factor(y_val_pred_rf, levels = levels(y_val))
+
+confusion_matrix_val_rf <- confusionMatrix(y_val_pred_rf, y_val)
+cat("\nValidation Set Performance (Random Forest):\n")
+print(confusion_matrix_val_rf)
+
+y_test_pred_rf <- predict(rf_model, newdata = data.frame(X_test))
+
+y_test_pred_rf <- factor(y_test_pred_rf, levels = levels(y_test))
+
+confusion_matrix_test_rf <- confusionMatrix(y_test_pred_rf, y_test)
+cat("\nTest Set Performance (Random Forest):\n")
+print(confusion_matrix_test_rf)
 
 ```
 
