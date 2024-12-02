@@ -79,7 +79,6 @@ df$`SWALLOWING DIFFICULTY` <- as.numeric(factor(df$`SWALLOWING DIFFICULTY`)) - 1
 df$`CHEST PAIN` <- as.numeric(factor(df$`CHEST PAIN`)) - 1
 
 df
-
 ```
 
 ```{r}
