@@ -162,18 +162,19 @@ YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive
 
 ```{r}
 library(caret)
+library(ROSE)
+library(pROC)
+library(rpart.plot)
 
+# 创建新变量并转换目标变量为因子
 df_new$ANXYELFIN <- df_new$ANXIETY * df_new$YELLOW_FINGERS
-print(df_new)
-
 X <- df_new[, !(names(df_new) %in% c("LUNG_CANCER"))]
 y <- df_new$LUNG_CANCER
+y <- factor(y, levels = c(0, 1))
 
-print(table(y))
-
+# 数据集划分（50%训练集, 25%验证集, 25%测试集）
 set.seed(42)
-
-train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+train_index <- createDataPartition(y, p = 0.5, list = FALSE)
 X_train <- X[train_index, ]
 y_train <- y[train_index]
 X_temp <- X[-train_index, ]
@@ -186,79 +187,268 @@ y_val <- y_temp[val_test_index]
 X_test <- X_temp[-val_test_index, ]
 y_test <- y_temp[-val_test_index]
 
+cat("\nDataset Sizes Before Resampling:\n")
 cat("Training set size: ", dim(X_train)[1], "\n")
 cat("Validation set size: ", dim(X_val)[1], "\n")
 cat("Test set size: ", dim(X_test)[1], "\n")
 
-```
-
-```{r}
+# 将训练数据合并为单一数据框以适应重采样
 train_data <- data.frame(y_train, X_train)
-val_data <- data.frame(y_val, X_val)
-test_data <- data.frame(y_test, X_test)
 
-lr_model <- glm(y_train ~ ., data = train_data, family = binomial)
+# 平衡训练数据
+cat("\nApplying ROSE Oversampling...\n")
+train_data_rose <- ovun.sample(y_train ~ ., data = train_data, method = "both", p = 0.5, N = 1000, seed = 42)$data
 
-summary(lr_model)
+# 检查重采样后数据分布
+cat("\nClass Distribution After Resampling:\n")
+print(table(train_data_rose$y_train))
 
-y_val_pred <- predict(lr_model, newdata = val_data, type = "response")
-y_val_pred <- ifelse(y_val_pred > 0.5, 1, 0)
+# 重新拆分为X和y
+X_train_rose <- train_data_rose[, -1]
+y_train_rose <- train_data_rose$y_train
 
-confusion_matrix_val <- confusionMatrix(as.factor(y_val_pred), as.factor(y_val))
-cat("\nValidation Set Performance:\n")
-print(confusion_matrix_val)
+# K-Fold交叉验证参数
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 5, verboseIter = TRUE)
 
-y_test_pred <- predict(lr_model, newdata = test_data, type = "response")
-y_test_pred <- ifelse(y_test_pred > 0.5, 1, 0)
-
-confusion_matrix_test <- confusionMatrix(as.factor(y_test_pred), as.factor(y_test))
-cat("\nTest Set Performance:\n")
-print(confusion_matrix_test)
 ```
 
 ```{r}
-library(rpart)
 library(caret)
-
-tree_model <- rpart(y_train ~ ., data = data.frame(y_train, X_train), method = "class")
-
-y_val_pred_tree <- predict(tree_model, newdata = data.frame(X_val), type = "class")
-confusion_matrix_val_tree <- confusionMatrix(y_val_pred_tree, as.factor(y_val))
-cat("\nValidation Set Performance (Decision Tree):\n")
-print(confusion_matrix_val_tree)
-
-y_test_pred_tree <- predict(tree_model, newdata = data.frame(X_test), type = "class")
-confusion_matrix_test_tree <- confusionMatrix(y_test_pred_tree, as.factor(y_test))
-cat("\nTest Set Performance (Decision Tree):\n")
-print(confusion_matrix_test_tree)
-
-```
-
-```{r}
+library(pROC)
+library(e1071)  # SVM
 library(randomForest)
-library(caret)
+library(class)  # KNN
+# Check column names after resampling and dynamically get target variable names
+target_var <- colnames(train_data_rose)[1]  # Dynamically get the target variable column name
 
-y_train <- factor(y_train, levels = c(0, 1))
-y_val <- factor(y_val, levels = c(0, 1))
-y_test <- factor(y_test, levels = c(0, 1))
+# Perform K-Fold cross-validation
+cat("\nPerforming K-Fold Cross Validation on Training Set...\n")
+lr_model_cv <- train(
+  as.formula(paste(target_var, "~ .")),  # Dynamic construction of formulas
+  data = train_data_rose,
+  method = "glm",
+  family = binomial,
+  trControl = train_control
+)
 
-rf_model <- randomForest(y_train ~ ., data = data.frame(y_train, X_train), ntree = 100)
+# Output K-Fold cross-validation results
+cat("\nCross-Validation Results:\n")
+print(lr_model_cv)
 
-y_val_pred_rf <- predict(rf_model, newdata = data.frame(X_val))
+# Final model trained with K-Fold
+lr_model <- lr_model_cv$finalModel
 
-y_val_pred_rf <- factor(y_val_pred_rf, levels = levels(y_val))
+# Validation set prediction
+y_val_prob <- predict(lr_model, newdata = data.frame(X_val), type = "response")
+y_val_pred <- ifelse(y_val_prob > 0.5, 1, 0)
 
-confusion_matrix_val_rf <- confusionMatrix(y_val_pred_rf, y_val)
-cat("\nValidation Set Performance (Random Forest):\n")
-print(confusion_matrix_val_rf)
+# Validation Set Performance Evaluation
+confusion_matrix_val <- confusionMatrix(as.factor(y_val_pred), factor(y_val, levels = c(0, 1)))
+val_accuracy <- confusion_matrix_val$overall["Accuracy"]
+cat("\nValidation Set Accuracy:\n")
+print(val_accuracy)
 
-y_test_pred_rf <- predict(rf_model, newdata = data.frame(X_test))
+# Test Set Prediction
+y_test_prob <- predict(lr_model, newdata = data.frame(X_test), type = "response")
+y_test_pred <- ifelse(y_test_prob > 0.5, 1, 0)
 
-y_test_pred_rf <- factor(y_test_pred_rf, levels = levels(y_test))
+# Test Set Performance Evaluation
+confusion_matrix_test <- confusionMatrix(as.factor(y_test_pred), factor(y_test, levels = c(0, 1)))
+test_accuracy <- confusion_matrix_test$overall["Accuracy"]
+cat("\nTest Set Accuracy:\n")
+print(test_accuracy)
 
-confusion_matrix_test_rf <- confusionMatrix(y_test_pred_rf, y_test)
-cat("\nTest Set Performance (Random Forest):\n")
-print(confusion_matrix_test_rf)
+# Plotting ROC curves and calculating AUC
+cat("\nPlotting ROC Curve for Test Set...\n")
+
+# Test set ROC curve
+roc_test <- roc(as.numeric(y_test) - 1, y_test_prob, smooth = TRUE)  # Adding Smoothing Parameters
+auc_test <- auc(roc_test)
+
+# roc plot
+plot(
+  roc_test,
+  col = "red",
+  main = "ROC Curve for Test Set",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+
+# auc result
+cat("\nTest Set AUC:\n")
+print(auc_test)
+
+```
+
+Decision Tree Model
+
+```{r}
+# Training Decision Tree Models
+cat("\nTraining Decision Tree with K-Fold Cross Validation on Resampled Data...\n")
+
+tree_model_cv <- train(
+  as.formula(paste(target_var, "~ .")), 
+  data = train_data_rose,
+  method = "rpart",
+  trControl = train_control,
+  tuneGrid = expand.grid(cp = seq(0.01, 0.1, by = 0.01))  # 调整复杂度参数
+)
+cat("\nDecision Tree Cross-Validation Results:\n")
+print(tree_model_cv)
+
+tree_model <- tree_model_cv$finalModel
+
+cat("\nPlotting Decision Tree...\n")
+rpart.plot(tree_model)
+
+y_val_prob_tree <- predict(tree_model, newdata = data.frame(X_val), type = "prob")[, 2]
+y_val_pred_tree <- ifelse(y_val_prob_tree > 0.5, 1, 0)
+
+confusion_matrix_val_tree <- confusionMatrix(as.factor(y_val_pred_tree), factor(y_val, levels = c(0, 1)))
+val_accuracy_tree <- confusion_matrix_val_tree$overall["Accuracy"]
+cat("\nValidation Set Accuracy (Decision Tree):\n")
+print(val_accuracy_tree)
+
+y_test_prob_tree <- predict(tree_model, newdata = data.frame(X_test), type = "prob")[, 2]
+y_test_pred_tree <- ifelse(y_test_prob_tree > 0.5, 1, 0)
+
+confusion_matrix_test_tree <- confusionMatrix(as.factor(y_test_pred_tree), factor(y_test, levels = c(0, 1)))
+test_accuracy_tree <- confusion_matrix_test_tree$overall["Accuracy"]
+cat("\nTest Set Accuracy (Decision Tree):\n")
+print(test_accuracy_tree)
+
+roc_test_tree <- roc(as.numeric(y_test) - 1, y_test_prob_tree, smooth = TRUE)
+auc_test_tree <- auc(roc_test_tree)
+plot(
+  roc_test_tree,
+  col = "blue",
+  main = "ROC Curve for Decision Tree (Resampled Data)",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (Decision Tree):\n")
+print(auc_test_tree)
+
+```
+
+Random Forest
+
+```{r}
+cat("\nTraining Random Forest with K-Fold Cross Validation...\n")
+rf_model_cv <- train(
+  as.formula(paste(target_var, "~ .")),
+  data = train_data_rose,
+  method = "rf",
+  trControl = train_control,
+  tuneGrid = expand.grid(mtry = sqrt(ncol(X_train_rose)))
+)
+
+cat("\nRandom Forest Cross-Validation Results:\n")
+print(rf_model_cv)
+
+rf_model <- rf_model_cv$finalModel
+
+y_test_prob_rf <- predict(rf_model, newdata = data.frame(X_test), type = "prob")[, 2]
+y_test_pred_rf <- ifelse(y_test_prob_rf > 0.5, 1, 0)
+
+confusion_matrix_test_rf <- confusionMatrix(as.factor(y_test_pred_rf), factor(y_test, levels = c(0, 1)))
+cat("\nTest Set Accuracy (Random Forest):\n")
+print(confusion_matrix_test_rf$overall["Accuracy"])
+
+roc_test_rf <- roc(as.numeric(y_test) - 1, y_test_prob_rf, smooth = TRUE)
+auc_test_rf <- auc(roc_test_rf)
+plot(
+  roc_test_rf,
+  col = "green",
+  main = "ROC Curve for Random Forest",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (Random Forest):\n")
+print(auc_test_rf)
+```
+
+#### **Support Vector Classifier (SVC)**
+
+```{r}
+library(kernlab)
+
+cat("\nTraining Support Vector Classifier (SVC) with K-Fold Cross Validation...\n")
+svc_model <- ksvm(
+  x = as.matrix(X_train_rose),
+  y = as.factor(y_train_rose),
+  type = "C-svc",
+  kernel = "rbfdot",
+  C = 1,
+  prob.model = TRUE
+)
+
+cat("\nSVC Model Trained Successfully.\n")
+
+# Test Set Evaluation
+# Probability values for prediction categories
+y_test_prob_svc <- predict(svc_model, newdata = as.matrix(X_test), type = "probabilities")[, 2]
+y_test_pred_svc <- ifelse(y_test_prob_svc > 0.5, 1, 0)
+
+confusion_matrix_test_svc <- confusionMatrix(as.factor(y_test_pred_svc), factor(y_test, levels = c(0, 1)))
+cat("\nTest Set Accuracy (SVC):\n")
+print(confusion_matrix_test_svc$overall["Accuracy"])
+
+roc_test_svc <- roc(as.numeric(y_test) - 1, y_test_prob_svc, smooth = TRUE)
+auc_test_svc <- auc(roc_test_svc)
+plot(
+  roc_test_svc,
+  col = "blue",
+  main = "ROC Curve for SVC",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (SVC):\n")
+print(auc_test_svc)
+```
+
+#### Gaussian Naive Bayes
+
+```{r}
+library(naivebayes)
+
+cat("\nTraining Gaussian Naive Bayes...\n")
+gnb_model_cv <- train(
+  as.formula(paste(target_var, "~ .")),
+  data = train_data_rose,
+  method = "naive_bayes",
+  trControl = train_control
+)
+
+cat("\nGaussian Naive Bayes Cross-Validation Results:\n")
+print(gnb_model_cv)
+
+gnb_model <- gnb_model_cv$finalModel
+
+y_test_prob_gnb <- predict(gnb_model, newdata = data.frame(X_test), type = "prob")[, 2]
+y_test_pred_gnb <- ifelse(y_test_prob_gnb > 0.5, 1, 0)
+
+confusion_matrix_test_gnb <- confusionMatrix(as.factor(y_test_pred_gnb), factor(y_test, levels = c(0, 1)))
+cat("\nTest Set Accuracy (Gaussian Naive Bayes):\n")
+print(confusion_matrix_test_gnb$overall["Accuracy"])
+
+roc_test_gnb <- roc(as.numeric(y_test) - 1, y_test_prob_gnb)
+auc_test_gnb <- auc(roc_test_gnb)
+plot(
+  roc_test_gnb,
+  col = "purple",
+  main = "ROC Curve for Gaussian Naive Bayes",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (Gaussian Naive Bayes):\n")
+print(auc_test_gnb)
 
 ```
 
