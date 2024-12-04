@@ -160,27 +160,29 @@ corrplot(cn, method = "color", col = colorRampPalette(c("blue", "white", "red"))
 
 YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive correlation. None of the other positive correlations are as high. For example, FATIGUE and CHRONIC_DISEASE have a correlation of -0.10, which is hardly linear. Most of the correlations between the variables are close to 0, which suggests that the variables may be independent or have a non-linear relationship.
 
+#### Linear Regression
+
 ```{r}
 library(caret)
 library(ROSE)
 library(pROC)
 library(rpart.plot)
 
-# 创建新变量并转换目标变量为因子
+# Create a new variable and convert the target variable to a factor
 df_new$ANXYELFIN <- df_new$ANXIETY * df_new$YELLOW_FINGERS
 X <- df_new[, !(names(df_new) %in% c("LUNG_CANCER"))]
 y <- df_new$LUNG_CANCER
 y <- factor(y, levels = c(0, 1))
 
-# 数据集划分（50%训练集, 25%验证集, 25%测试集）
-set.seed(42)
+# Data set partitioning (50% training set, 25% validation set, 25% test set)
+set.seed(1234)
 train_index <- createDataPartition(y, p = 0.5, list = FALSE)
 X_train <- X[train_index, ]
 y_train <- y[train_index]
 X_temp <- X[-train_index, ]
 y_temp <- y[-train_index]
 
-set.seed(42)
+set.seed(1234)
 val_test_index <- createDataPartition(y_temp, p = 0.5, list = FALSE)
 X_val <- X_temp[val_test_index, ]
 y_val <- y_temp[val_test_index]
@@ -192,23 +194,23 @@ cat("Training set size: ", dim(X_train)[1], "\n")
 cat("Validation set size: ", dim(X_val)[1], "\n")
 cat("Test set size: ", dim(X_test)[1], "\n")
 
-# 将训练数据合并为单一数据框以适应重采样
+# Merge training data into a single data frame to accommodate resampling
 train_data <- data.frame(y_train, X_train)
 
-# 平衡训练数据
+# Balancing training data
 cat("\nApplying ROSE Oversampling...\n")
 train_data_rose <- ovun.sample(y_train ~ ., data = train_data, method = "both", p = 0.5, N = 1000, seed = 42)$data
 
-# 检查重采样后数据分布
+# Checking data distribution after resampling
 cat("\nClass Distribution After Resampling:\n")
 print(table(train_data_rose$y_train))
 
-# 重新拆分为X和y
+# Re-split into x and y
 X_train_rose <- train_data_rose[, -1]
 y_train_rose <- train_data_rose$y_train
 
-# K-Fold交叉验证参数
-set.seed(42)
+# K-Fold cross-validation parameters
+set.seed(1234)
 train_control <- trainControl(method = "cv", number = 5, verboseIter = TRUE)
 
 ```
@@ -437,7 +439,7 @@ confusion_matrix_test_gnb <- confusionMatrix(as.factor(y_test_pred_gnb), factor(
 cat("\nTest Set Accuracy (Gaussian Naive Bayes):\n")
 print(confusion_matrix_test_gnb$overall["Accuracy"])
 
-roc_test_gnb <- roc(as.numeric(y_test) - 1, y_test_prob_gnb)
+roc_test_gnb <- roc(as.numeric(y_test) - 1, y_test_prob_gnb, smooth = TRUE)
 auc_test_gnb <- auc(roc_test_gnb)
 plot(
   roc_test_gnb,
@@ -449,6 +451,146 @@ plot(
 )
 cat("\nTest Set AUC (Gaussian Naive Bayes):\n")
 print(auc_test_gnb)
+
+```
+
+#### K Nearest Neighbor
+
+```{r}
+cat("\nTraining K-Nearest Neighbor (KNN) with K-Fold Cross Validation...\n")
+knn_model_cv <- train(
+  as.formula(paste(target_var, "~ .")),
+  data = train_data_rose,
+  method = "knn",
+  trControl = train_control,
+  tuneGrid = expand.grid(k = seq(3, 15, by = 2))
+)
+
+cat("\nKNN Cross-Validation Results:\n")
+print(knn_model_cv)
+
+knn_model <- knn_model_cv$finalModel
+
+y_test_prob_knn <- predict(knn_model, newdata = data.frame(X_test), type = "prob")[, 2]
+y_test_pred_knn <- ifelse(y_test_prob_knn > 0.5, 1, 0)
+
+confusion_matrix_test_knn <- confusionMatrix(as.factor(y_test_pred_knn), factor(y_test, levels = c(0, 1)))
+cat("\nTest Set Accuracy (KNN):\n")
+print(confusion_matrix_test_knn$overall["Accuracy"])
+
+# 绘制ROC曲线
+roc_test_knn <- roc(as.numeric(y_test) - 1, y_test_prob_knn, smooth = TRUE)
+auc_test_knn <- auc(roc_test_knn)
+plot(
+  roc_test_knn,
+  col = "orange",
+  main = "ROC Curve for KNN",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (KNN):\n")
+print(auc_test_knn)
+```
+
+```{r}
+cat("\nTraining XGBoost with K-Fold Cross Validation...\n")
+xgb_model_cv <- train(
+  as.formula(paste(target_var, "~ .")),
+  data = train_data_rose,
+  method = "xgbTree",
+  trControl = train_control,
+  tuneGrid = expand.grid(nrounds = 100, max_depth = 6, eta = 0.3, gamma = 0, colsample_bytree = 1, min_child_weight = 1, subsample = 1)
+)
+
+cat("\nXGBoost Cross-Validation Results:\n")
+print(xgb_model_cv)
+
+xgb_model <- xgb_model_cv$finalModel
+
+# Test Set Evaluation
+# Return the probability vector
+y_test_prob_xgb <- predict(xgb_model, newdata = as.matrix(X_test))  
+# II. Forecasts by category
+y_test_pred_xgb <- ifelse(y_test_prob_xgb > 0.5, 1, 0)  
+
+# Test Set Performance Evaluation
+confusion_matrix_test_xgb <- confusionMatrix(as.factor(y_test_pred_xgb), factor(y_test, levels = c(0, 1)))
+cat("\nTest Set Accuracy (XGBoost):\n")
+print(confusion_matrix_test_xgb$overall["Accuracy"])
+
+roc_test_xgb <- roc(as.numeric(y_test) - 1, y_test_prob_xgb, smooth = TRUE)
+auc_test_xgb <- auc(roc_test_xgb)
+plot(
+  roc_test_xgb,
+  col = "red",
+  main = "ROC Curve for XGBoost",
+  print.auc = TRUE,
+  legacy.axes = TRUE,
+  print.auc.y = 0.4
+)
+cat("\nTest Set AUC (XGBoost):\n")
+print(auc_test_xgb)
+```
+
+ROC Curve
+
+```{r}
+library(pROC)
+library(ggplot2)
+
+# Collect ROC objects for all models
+roc_list <- list(
+  # Logistic Regression ROC
+  "Logistic Regression" = roc_test,
+  # Decision Tree ROC
+  "Decision Tree" = roc_test_tree,
+  # Random Forest ROC
+  "Random Forest" = roc_test_rf,
+  # Support Vector Classifier ROC
+  "SVC" = roc_test_svc,
+  # Gaussian Naive Bayes ROC
+  "Gaussian Naive Bayes" = roc_test_gnb,
+  # K-Nearest Neighbor ROC
+  "KNN" = roc_test_knn,
+  # XGBoost ROC
+  "XGBoost" = roc_test_xgb
+)
+
+# Converting ROC objects to dataframe format
+roc_data <- lapply(names(roc_list), function(model_name) {
+  roc_obj <- roc_list[[model_name]]
+  data.frame(
+    FPR = 1 - roc_obj$specificities,  # False Positive Rate
+    TPR = roc_obj$sensitivities,      # True Positive Rate
+    Model = model_name
+  )
+})
+
+# Merge all model data
+roc_data <- do.call(rbind, roc_data) 
+
+# Plotting ROC curves for multiple models
+ggplot(roc_data, aes(x = FPR, y = TPR, color = Model)) +
+  geom_line(size = 0.5) +
+  scale_color_manual(
+    values = c(
+      "Logistic Regression" = "red",
+      "Decision Tree" = "blue",
+      "Random Forest" = "green",
+      "SVC" = "purple",
+      "Gaussian Naive Bayes" = "yellow",
+      "KNN" = "orange",
+      "XGBoost" = "cyan"
+    )
+  ) +
+  labs(
+    title = "ROC Curves for Multiple Models",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 
 ```
 
