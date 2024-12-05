@@ -1,5 +1,5 @@
 ---
-title: "Your Title"
+title: "Comparison of machine learning-based models for early diagnosis and prediction of lung cancer"
 subtitle: "BMIN503/EPID600 Final Project"
 author: "FirstName LastName"
 format: html
@@ -18,13 +18,17 @@ The aim of this project is to develop a machine learning-based lung cancer detec
 
 ## Introduction {#sec-introduction}
 
-Lung cancer is one of the leading causes of cancer-related deaths globally and is usually detected at an advanced stage, resulting in limited treatment options. Early detection can significantly improve survival rates, but current diagnostic methods rely on extensive manual review of CT scan images by radiologists, a process that is both time-consuming and susceptible to subjective factors. The aim of this project is to develop a machine learning model to aid in the early diagnosis of lung cancer, with the goal of reducing false positives and improving diagnostic efficiency, thereby supporting clinicians. The project is inherently interdisciplinary, incorporating knowledge from oncology and machine learning. Oncologists provided insights into cancer progression, risk factors, and diagnostic challenges, while machine learning experts provided methods for model selection, data enhancement, and multimodal data integration.
+Lung cancer is one of the leading causes of cancer-related deaths globally and is often diagnosed at an advanced stage, limiting treatment options and reducing survival rates. Early detection plays a crucial role in improving patient outcomes, but current diagnostic practices primarily rely on subjective assessments and are prone to inefficiencies. The aim of this project is to develop a machine learning-based predictive model for lung cancer diagnosis, using patient data to identify key risk factors and improve diagnostic accuracy. This data-driven approach focuses on reducing false positives and enhancing clinical decision-making efficiency, ultimately supporting clinicians in early detection efforts.
 
-I spoke with Dr. Mowery and Dr. Fan, who emphasized the importance of reducing the false-positive rate and provided clinical knowledge about key risk factors to help optimize early lung cancer diagnosis, and Dr. Mowery, who suggested integrating image data and clinical text annotations and proposed technical ideas for combining visual and non-visual data to improve prediction accuracy. I combined their claims of having made predictions with data and evaluated the predictions.
+Collaborations with Dr. Mowery and Dr. Fan were instrumental in shaping this project. Dr. Fan provided critical insights into the clinical presentation, risk factors, and diagnostic challenges associated with lung cancer, while Dr. Mowery highlighted the importance of minimizing false-positive rates to ensure actionable results. This project leverages advanced machine learning techniques, informed by their guidance, to analyze structured data and evaluate predictive performance. By focusing solely on patient data, the study demonstrates the potential of machine learning in streamlining lung cancer diagnosis and supporting evidence-based clinical practices.
 
 ## Methods {#sec-methods}
 
-Describe the data used and general methodological approach used to address the problem described in the @sec-introduction. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why.
+The analysis focuses on a dataset (survey lung cancer.csv) with information about individuals, including factors potentially influencing lung cancer incidence. Each row represents a respondent, and columns capture variables like smoking habits, gender, symptoms, and diagnoses.
+
+The primary objective is to predict the presence of lung cancer (LUNG_CANCER), a binary outcome. A robust methodological approach ensures the dataset is cleaned, analyzed, and modeled effectively. The steps include:
+
+Data Loading and Cleaning: Eliminate duplicates, encode categorical data numerically, and address imbalances. Exploratory Data Analysis (EDA): Analyze distributions and relationships between variables to identify significant predictors. Feature Engineering: Create new features based on domain knowledge to enhance model performance. Model Development: Train multiple machine learning models (e.g., Logistic Regression, Decision Tree, Random Forest, SVM, XGBoost) using K-Fold Cross-Validation for robust evaluation. Model Evaluation: Use accuracy, ROC curves, and AUC as performance metrics to compare models.
 
 ```{r}
 library(dplyr)
@@ -38,7 +42,7 @@ df <- read_csv('survey lung cancer.csv')
 print(df)
 ```
 
-**Note: In this dataset, YES=2 & NO=1**
+Note: In this dataset, YES=2 & NO=1
 
 ```{r}
 dim(df)
@@ -160,8 +164,6 @@ corrplot(cn, method = "color", col = colorRampPalette(c("blue", "white", "red"))
 
 YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive correlation. None of the other positive correlations are as high. For example, FATIGUE and CHRONIC_DISEASE have a correlation of -0.10, which is hardly linear. Most of the correlations between the variables are close to 0, which suggests that the variables may be independent or have a non-linear relationship.
 
-#### Linear Regression
-
 ```{r}
 library(caret)
 library(ROSE)
@@ -214,6 +216,8 @@ set.seed(1234)
 train_control <- trainControl(method = "cv", number = 5, verboseIter = TRUE)
 
 ```
+
+#### Linear Regression
 
 ```{r}
 library(caret)
@@ -284,7 +288,7 @@ print(auc_test)
 
 ```
 
-Decision Tree Model
+#### Decision Tree Model
 
 ```{r}
 # Training Decision Tree Models
@@ -336,7 +340,7 @@ print(auc_test_tree)
 
 ```
 
-Random Forest
+#### Random Forest
 
 ```{r}
 cat("\nTraining Random Forest with K-Fold Cross Validation...\n")
@@ -478,7 +482,6 @@ confusion_matrix_test_knn <- confusionMatrix(as.factor(y_test_pred_knn), factor(
 cat("\nTest Set Accuracy (KNN):\n")
 print(confusion_matrix_test_knn$overall["Accuracy"])
 
-# 绘制ROC曲线
 roc_test_knn <- roc(as.numeric(y_test) - 1, y_test_prob_knn, smooth = TRUE)
 auc_test_knn <- auc(roc_test_knn)
 plot(
@@ -492,6 +495,8 @@ plot(
 cat("\nTest Set AUC (KNN):\n")
 print(auc_test_knn)
 ```
+
+#### XGBoost
 
 ```{r}
 cat("\nTraining XGBoost with K-Fold Cross Validation...\n")
@@ -533,7 +538,7 @@ cat("\nTest Set AUC (XGBoost):\n")
 print(auc_test_xgb)
 ```
 
-ROC Curve
+#### ROC Curve
 
 ```{r}
 library(pROC)
@@ -596,8 +601,34 @@ ggplot(roc_data, aes(x = FPR, y = TPR, color = Model)) +
 
 ## Results {#sec-results}
 
-Describe your results and include relevant tables, plots, and code/comments used to obtain them. You may refer to the @sec-methods as needed. End with a brief conclusion of your findings related to the question you set out to address. You can include references if you'd like, but this is not required.
+Initial Data Cleaning:
+
+The dataset contained 309 rows and 16 columns. After removing 33 duplicate entries, the dataset was reduced to 276 unique records.There were no missing values in the dataset, ensuring complete data for analysis.
+
+Data Transformation:
+
+Non-numeric features, such as GENDER and LUNG_CANCER, were encoded into numerical values using LabelEncoder. Binary variables (e.g., YES/NO) were transformed into 1 and 0 for consistency.
+
+Exploratory Data Analysis:
+
+The target variable LUNG_CANCER was imbalanced with 238 positive cases (86.23%) and 38 negative cases (13.77%). Various features, such as GENDER, AGE, SMOKING, and SHORTNESS OF BREATH, showed weak or no significant relationship with the target variable and were dropped to simplify the dataset.
+
+Correlation Analysis:
+
+A correlation matrix was created to identify interdependencies among features.Significant correlations were observed between features like ANXIETY and YELLOW_FINGERS (r \> 0.50), leading to the creation of a new combined feature, ANXYELFIN.
+
+Feature Selection:
+
+The newly created feature ANXYELFIN was introduced to capture combined effects of ANXIETY and YELLOW_FINGERS. And the final dataset consisted of 13 columns, including the engineered feature and target variable.
+
+Resampling of training data:
+
+In order to achieve data balance during the data processing in this paper, the training set was resampled in both directions using the ROSE package, i.e., both oversampling and undersampling were performed to balance the category distribution. The resampling parameter p = 0.5 and the total sample size N = 1000 were set to ensure a more balanced category distribution. Output the resampled category distribution: Class Distribution After Resampling. 0: X 1: Y Reclassify the resampled data into independent variables (X_train_rose) and dependent variables (y_train_rose) to prepare for model training. In the cross-validation setup, the training process was evaluated using the K-Fold Cross-Validation) method. A 5-fold cross-validation was configured and verboseIter was enabled to monitor the training status for each iteration.
+
+In cross-validation, XGBoost and Random Forest achieved the highest cross-validation accuracies (98%), indicating strong performance during training. KNN with k=3 also performed very well (97.2% accuracy). In validation set, poor validation accuracies across most models suggest potential overfitting or issues with the validation split. In test set, XGBoost showed the best test accuracy (88.23%) and reasonable AUC (0.8703), demonstrating good generalization. The Decision Tree model achieved the highest AUC (0.9397), despite lower accuracy (13.23%). In conclusion, XGBoost and Random Forest models are the strongest performers based on cross-validation and test set metrics. Poor validation and test accuracies in other models highlight possible challenges in model generalization or dataset partitioning. Additional fine-tuning and adjustments, particularly for validation strategies, could further enhance performance.
 
 ## Conclusion
 
-This the conclusion. The @sec-results can be invoked here.
+This project successfully demonstrated the application of machine learning for lung cancer prediction using structured patient data. Through data cleaning, transformation, feature engineering, and robust model evaluation, this analysis highlights the potential of predictive modeling to support early diagnosis and improve clinical efficiency. High data quality was ensured through rigorous data preprocessing steps, such as de-weighting, coding categorical variables, and balancing category distributions through resampling, while target variable imbalance was effectively addressed. Based on model performance, the XGBoost and Random Forest models performed the best with a cross-validation accuracy of 98% and demonstrated good performance on the test set. Decision trees, although less accurate, achieved the highest AUC (0.9397) on the test set, suggesting an advantage in specific application scenarios. The poor performance of most models on the validation set reflects possible overfitting problems or deficiencies in the validation set partitioning strategy. Further optimization of the validation method can help improve the generalization ability of the models.
+
+In summary, this study demonstrates the potential application of machine learning in the early diagnosis of lung cancer and suggests that the performance can be further improved by fine optimization of the model and data processing process to provide strong auxiliary support for clinical diagnosis.

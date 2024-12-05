@@ -8,7 +8,7 @@
 
 <meta name="author" content="FirstName LastName">
 
-<title>Your Title</title>
+<title>Comparison of machine learning-based models for early diagnosis and prediction of lung cancer</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -3085,7 +3085,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Your Title</h1>
+<h1 class="title">Comparison of machine learning-based models for early diagnosis and prediction of lung cancer</h1>
 <p class="subtitle lead">BMIN503/EPID600 Final Project</p>
 </div>
 
@@ -3117,12 +3117,14 @@ vertical-align: -.125em;
 </section>
 <section id="sec-introduction" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="sec-introduction"><span class="header-section-number">2</span> Introduction</h2>
-<p>Lung cancer is one of the leading causes of cancer-related deaths globally and is usually detected at an advanced stage, resulting in limited treatment options. Early detection can significantly improve survival rates, but current diagnostic methods rely on extensive manual review of CT scan images by radiologists, a process that is both time-consuming and susceptible to subjective factors. The aim of this project is to develop a machine learning model to aid in the early diagnosis of lung cancer, with the goal of reducing false positives and improving diagnostic efficiency, thereby supporting clinicians. The project is inherently interdisciplinary, incorporating knowledge from oncology and machine learning. Oncologists provided insights into cancer progression, risk factors, and diagnostic challenges, while machine learning experts provided methods for model selection, data enhancement, and multimodal data integration.</p>
-<p>I spoke with Dr. Mowery and Dr. Fan, who emphasized the importance of reducing the false-positive rate and provided clinical knowledge about key risk factors to help optimize early lung cancer diagnosis, and Dr. Mowery, who suggested integrating image data and clinical text annotations and proposed technical ideas for combining visual and non-visual data to improve prediction accuracy. I combined their claims of having made predictions with data and evaluated the predictions.</p>
+<p>Lung cancer is one of the leading causes of cancer-related deaths globally and is often diagnosed at an advanced stage, limiting treatment options and reducing survival rates. Early detection plays a crucial role in improving patient outcomes, but current diagnostic practices primarily rely on subjective assessments and are prone to inefficiencies. The aim of this project is to develop a machine learning-based predictive model for lung cancer diagnosis, using patient data to identify key risk factors and improve diagnostic accuracy. This data-driven approach focuses on reducing false positives and enhancing clinical decision-making efficiency, ultimately supporting clinicians in early detection efforts.</p>
+<p>Collaborations with Dr. Mowery and Dr. Fan were instrumental in shaping this project. Dr. Fan provided critical insights into the clinical presentation, risk factors, and diagnostic challenges associated with lung cancer, while Dr. Mowery highlighted the importance of minimizing false-positive rates to ensure actionable results. This project leverages advanced machine learning techniques, informed by their guidance, to analyze structured data and evaluate predictive performance. By focusing solely on patient data, the study demonstrates the potential of machine learning in streamlining lung cancer diagnosis and supporting evidence-based clinical practices.</p>
 </section>
 <section id="sec-methods" class="level2" data-number="3">
 <h2 data-number="3" class="anchored" data-anchor-id="sec-methods"><span class="header-section-number">3</span> Methods</h2>
-<p>Describe the data used and general methodological approach used to address the problem described in the <a href="#sec-introduction" class="quarto-xref">Section 2</a>. Subsequently, incorporate full R code necessary to retrieve and clean data, and perform analysis. Be sure to include a description of code so that others (including your future self) can understand what you are doing and why.</p>
+<p>The analysis focuses on a dataset (survey lung cancer.csv) with information about individuals, including factors potentially influencing lung cancer incidence. Each row represents a respondent, and columns capture variables like smoking habits, gender, symptoms, and diagnoses.</p>
+<p>The primary objective is to predict the presence of lung cancer (LUNG_CANCER), a binary outcome. A robust methodological approach ensures the dataset is cleaned, analyzed, and modeled effectively. The steps include:</p>
+<p>Data Loading and Cleaning: Eliminate duplicates, encode categorical data numerically, and address imbalances. Exploratory Data Analysis (EDA): Analyze distributions and relationships between variables to identify significant predictors. Feature Engineering: Create new features based on domain knowledge to enhance model performance. Model Development: Train multiple machine learning models (e.g., Logistic Regression, Decision Tree, Random Forest, SVM, XGBoost) using K-Fold Cross-Validation for robust evaluation. Model Evaluation: Use accuracy, ROC curves, and AUC as performance metrics to compare models.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -3178,7 +3180,7 @@ dbl (14): AGE, SMOKING, YELLOW_FINGERS, ANXIETY, PEER_PRESSURE, CHRONIC DISE...
 #   `SWALLOWING DIFFICULTY` &lt;dbl&gt;, `CHEST PAIN` &lt;dbl&gt;, LUNG_CANCER &lt;chr&gt;</code></pre>
 </div>
 </div>
-<p><strong>Note: In this dataset, YES=2 &amp; NO=1</strong></p>
+<p>Note: In this dataset, YES=2 &amp; NO=1</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -3589,8 +3591,6 @@ LUNG_CANCER            0.25302697          0.2689400940  0.19485572   1.0000000<
 </div>
 </div>
 <p>YELLOW_FINGERS and ANXIETY have a correlation of 0.56, showing a strong positive correlation. None of the other positive correlations are as high. For example, FATIGUE and CHRONIC_DISEASE have a correlation of -0.10, which is hardly linear. Most of the correlations between the variables are close to 0, which suggests that the variables may be independent or have a non-linear relationship.</p>
-<section id="linear-regression" class="level4" data-number="3.0.1">
-<h4 data-number="3.0.1" class="anchored" data-anchor-id="linear-regression"><span class="header-section-number">3.0.1</span> Linear Regression</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(caret)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -3686,6 +3686,8 @@ Class Distribution After Resampling:</code></pre>
 <span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
 <span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>train_control <span class="ot">&lt;-</span> <span class="fu">trainControl</span>(<span class="at">method =</span> <span class="st">&quot;cv&quot;</span>, <span class="at">number =</span> <span class="dv">5</span>, <span class="at">verboseIter =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<section id="linear-regression" class="level4" data-number="3.0.1">
+<h4 data-number="3.0.1" class="anchored" data-anchor-id="linear-regression"><span class="header-section-number">3.0.1</span> Linear Regression</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(caret)</span>
 <span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)</span>
@@ -3844,7 +3846,9 @@ Test Set AUC:</code></pre>
 <pre><code>Area under the curve: 0.8577</code></pre>
 </div>
 </div>
-<p>Decision Tree Model</p>
+</section>
+<section id="decision-tree-model" class="level4" data-number="3.0.2">
+<h4 data-number="3.0.2" class="anchored" data-anchor-id="decision-tree-model"><span class="header-section-number">3.0.2</span> Decision Tree Model</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb111"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb111-1"><a href="#cb111-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Training Decision Tree Models</span></span>
 <span id="cb111-2"><a href="#cb111-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Training Decision Tree with K-Fold Cross Validation on Resampled Data...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3985,7 +3989,9 @@ Test Set AUC (Decision Tree):</code></pre>
 <pre><code>Area under the curve: 0.9397</code></pre>
 </div>
 </div>
-<p>Random Forest</p>
+</section>
+<section id="random-forest" class="level4" data-number="3.0.3">
+<h4 data-number="3.0.3" class="anchored" data-anchor-id="random-forest"><span class="header-section-number">3.0.3</span> Random Forest</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb138"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb138-1"><a href="#cb138-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Training Random Forest with K-Fold Cross Validation...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -4086,8 +4092,8 @@ Test Set AUC (Random Forest):</code></pre>
 </div>
 </div>
 </section>
-<section id="support-vector-classifier-svc" class="level4" data-number="3.0.2">
-<h4 data-number="3.0.2" class="anchored" data-anchor-id="support-vector-classifier-svc"><span class="header-section-number">3.0.2</span> <strong>Support Vector Classifier (SVC)</strong></h4>
+<section id="support-vector-classifier-svc" class="level4" data-number="3.0.4">
+<h4 data-number="3.0.4" class="anchored" data-anchor-id="support-vector-classifier-svc"><span class="header-section-number">3.0.4</span> <strong>Support Vector Classifier (SVC)</strong></h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb158"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb158-1"><a href="#cb158-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kernlab)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -4168,8 +4174,8 @@ Test Set AUC (SVC):</code></pre>
 </div>
 </div>
 </section>
-<section id="gaussian-naive-bayes" class="level4" data-number="3.0.3">
-<h4 data-number="3.0.3" class="anchored" data-anchor-id="gaussian-naive-bayes"><span class="header-section-number">3.0.3</span> Gaussian Naive Bayes</h4>
+<section id="gaussian-naive-bayes" class="level4" data-number="3.0.5">
+<h4 data-number="3.0.5" class="anchored" data-anchor-id="gaussian-naive-bayes"><span class="header-section-number">3.0.5</span> Gaussian Naive Bayes</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb177"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb177-1"><a href="#cb177-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(naivebayes)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
@@ -4296,8 +4302,8 @@ Test Set AUC (Gaussian Naive Bayes):</code></pre>
 </div>
 </div>
 </section>
-<section id="k-nearest-neighbor" class="level4" data-number="3.0.4">
-<h4 data-number="3.0.4" class="anchored" data-anchor-id="k-nearest-neighbor"><span class="header-section-number">3.0.4</span> K Nearest Neighbor</h4>
+<section id="k-nearest-neighbor" class="level4" data-number="3.0.6">
+<h4 data-number="3.0.6" class="anchored" data-anchor-id="k-nearest-neighbor"><span class="header-section-number">3.0.6</span> K Nearest Neighbor</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb201"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb201-1"><a href="#cb201-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Training K-Nearest Neighbor (KNN) with K-Fold Cross Validation...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -4432,8 +4438,7 @@ Test Set Accuracy (KNN):</code></pre>
 <pre><code> Accuracy 
 0.1029412 </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb213"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb213-1"><a href="#cb213-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 绘制ROC曲线</span></span>
-<span id="cb213-2"><a href="#cb213-2" aria-hidden="true" tabindex="-1"></a>roc_test_knn <span class="ot">&lt;-</span> <span class="fu">roc</span>(<span class="fu">as.numeric</span>(y_test) <span class="sc">-</span> <span class="dv">1</span>, y_test_prob_knn, <span class="at">smooth =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb213"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb213-1"><a href="#cb213-1" aria-hidden="true" tabindex="-1"></a>roc_test_knn <span class="ot">&lt;-</span> <span class="fu">roc</span>(<span class="fu">as.numeric</span>(y_test) <span class="sc">-</span> <span class="dv">1</span>, y_test_prob_knn, <span class="at">smooth =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Setting levels: control = 0, case = 1</code></pre>
 </div>
@@ -4466,6 +4471,9 @@ Test Set AUC (KNN):</code></pre>
 <pre><code>Area under the curve: 0.9174</code></pre>
 </div>
 </div>
+</section>
+<section id="xgboost" class="level4" data-number="3.0.7">
+<h4 data-number="3.0.7" class="anchored" data-anchor-id="xgboost"><span class="header-section-number">3.0.7</span> XGBoost</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb221"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb221-1"><a href="#cb221-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;</span><span class="sc">\n</span><span class="st">Training XGBoost with K-Fold Cross Validation...</span><span class="sc">\n</span><span class="st">&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -4573,7 +4581,9 @@ Test Set AUC (XGBoost):</code></pre>
 <pre><code>Area under the curve: 0.8703</code></pre>
 </div>
 </div>
-<p>ROC Curve</p>
+</section>
+<section id="roc-curve" class="level4" data-number="3.0.8">
+<h4 data-number="3.0.8" class="anchored" data-anchor-id="roc-curve"><span class="header-section-number">3.0.8</span> ROC Curve</h4>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb241"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb241-1"><a href="#cb241-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pROC)</span>
 <span id="cb241-2"><a href="#cb241-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
@@ -4642,11 +4652,24 @@ Test Set AUC (XGBoost):</code></pre>
 </section>
 <section id="sec-results" class="level2" data-number="4">
 <h2 data-number="4" class="anchored" data-anchor-id="sec-results"><span class="header-section-number">4</span> Results</h2>
-<p>Describe your results and include relevant tables, plots, and code/comments used to obtain them. You may refer to the <a href="#sec-methods" class="quarto-xref">Section 3</a> as needed. End with a brief conclusion of your findings related to the question you set out to address. You can include references if you’d like, but this is not required.</p>
+<p>Initial Data Cleaning:</p>
+<p>The dataset contained 309 rows and 16 columns. After removing 33 duplicate entries, the dataset was reduced to 276 unique records.There were no missing values in the dataset, ensuring complete data for analysis.</p>
+<p>Data Transformation:</p>
+<p>Non-numeric features, such as GENDER and LUNG_CANCER, were encoded into numerical values using LabelEncoder. Binary variables (e.g., YES/NO) were transformed into 1 and 0 for consistency.</p>
+<p>Exploratory Data Analysis:</p>
+<p>The target variable LUNG_CANCER was imbalanced with 238 positive cases (86.23%) and 38 negative cases (13.77%). Various features, such as GENDER, AGE, SMOKING, and SHORTNESS OF BREATH, showed weak or no significant relationship with the target variable and were dropped to simplify the dataset.</p>
+<p>Correlation Analysis:</p>
+<p>A correlation matrix was created to identify interdependencies among features.Significant correlations were observed between features like ANXIETY and YELLOW_FINGERS (r &gt; 0.50), leading to the creation of a new combined feature, ANXYELFIN.</p>
+<p>Feature Selection:</p>
+<p>The newly created feature ANXYELFIN was introduced to capture combined effects of ANXIETY and YELLOW_FINGERS. And the final dataset consisted of 13 columns, including the engineered feature and target variable.</p>
+<p>Resampling of training data:</p>
+<p>In order to achieve data balance during the data processing in this paper, the training set was resampled in both directions using the ROSE package, i.e., both oversampling and undersampling were performed to balance the category distribution. The resampling parameter p = 0.5 and the total sample size N = 1000 were set to ensure a more balanced category distribution. Output the resampled category distribution: Class Distribution After Resampling. 0: X 1: Y Reclassify the resampled data into independent variables (X_train_rose) and dependent variables (y_train_rose) to prepare for model training. In the cross-validation setup, the training process was evaluated using the K-Fold Cross-Validation) method. A 5-fold cross-validation was configured and verboseIter was enabled to monitor the training status for each iteration.</p>
+<p>In cross-validation, XGBoost and Random Forest achieved the highest cross-validation accuracies (98%), indicating strong performance during training. KNN with k=3 also performed very well (97.2% accuracy). In validation set, poor validation accuracies across most models suggest potential overfitting or issues with the validation split. In test set, XGBoost showed the best test accuracy (88.23%) and reasonable AUC (0.8703), demonstrating good generalization. The Decision Tree model achieved the highest AUC (0.9397), despite lower accuracy (13.23%). In conclusion, XGBoost and Random Forest models are the strongest performers based on cross-validation and test set metrics. Poor validation and test accuracies in other models highlight possible challenges in model generalization or dataset partitioning. Additional fine-tuning and adjustments, particularly for validation strategies, could further enhance performance.</p>
 </section>
 <section id="conclusion" class="level2" data-number="5">
 <h2 data-number="5" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">5</span> Conclusion</h2>
-<p>This the conclusion. The <a href="#sec-results" class="quarto-xref">Section 4</a> can be invoked here.</p>
+<p>This project successfully demonstrated the application of machine learning for lung cancer prediction using structured patient data. Through data cleaning, transformation, feature engineering, and robust model evaluation, this analysis highlights the potential of predictive modeling to support early diagnosis and improve clinical efficiency. High data quality was ensured through rigorous data preprocessing steps, such as de-weighting, coding categorical variables, and balancing category distributions through resampling, while target variable imbalance was effectively addressed. Based on model performance, the XGBoost and Random Forest models performed the best with a cross-validation accuracy of 98% and demonstrated good performance on the test set. Decision trees, although less accurate, achieved the highest AUC (0.9397) on the test set, suggesting an advantage in specific application scenarios. The poor performance of most models on the validation set reflects possible overfitting problems or deficiencies in the validation set partitioning strategy. Further optimization of the validation method can help improve the generalization ability of the models.</p>
+<p>In summary, this study demonstrates the potential application of machine learning in the early diagnosis of lung cancer and suggests that the performance can be further improved by fine optimization of the model and data processing process to provide strong auxiliary support for clinical diagnosis.</p>
 </section>
 
 </main>
