@@ -1,7 +1,7 @@
 ---
 title: "Comparison of machine learning-based models for early diagnosis and prediction of lung cancer"
 subtitle: "BMIN503/EPID600 Final Project"
-author: "FirstName LastName"
+author: "Yue Cao"
 format: html
 editor: visual
 number-sections: true
@@ -9,8 +9,6 @@ embed-resources: true
 ---
 
 ------------------------------------------------------------------------
-
-Use this template to complete your project throughout the course. Your Final Project presentation will be based on the contents of this document. Replace the title/name above and text below with your own, but keep the headers. Feel free to change the theme and other display settings, although this is not required. I added a new sentence
 
 ## Overview {#sec-overview}
 
@@ -28,7 +26,7 @@ The analysis focuses on a dataset (survey lung cancer.csv) with information abou
 
 The primary objective is to predict the presence of lung cancer (LUNG_CANCER), a binary outcome. A robust methodological approach ensures the dataset is cleaned, analyzed, and modeled effectively. The steps include:
 
-Data Loading and Cleaning: Eliminate duplicates, encode categorical data numerically, and address imbalances. Exploratory Data Analysis (EDA): Analyze distributions and relationships between variables to identify significant predictors. Feature Engineering: Create new features based on domain knowledge to enhance model performance. Model Development: Train multiple machine learning models (e.g., Logistic Regression, Decision Tree, Random Forest, SVM, XGBoost) using K-Fold Cross-Validation for robust evaluation. Model Evaluation: Use accuracy, ROC curves, and AUC as performance metrics to compare models.
+Data Loading and Cleaning: Eliminate duplicates, encode categorical data numerically, and address imbalances. Exploratory Data Analysis (EDA): Analyze distributions and relationships between variables to identify significant predictors. Feature Engineering: Create new features based on domain knowledge to enhance model performance. Model Development: Train multiple machine learning models (e.g., Logistic Regression, Decision Tree, Random Forest, SVM, XGBoost, Gaussian Naive Bayes) using K-Fold Cross-Validation for robust evaluation. Model Evaluation: Use accuracy, ROC curves, and AUC as performance metrics to compare models.
 
 ```{r}
 library(dplyr)
@@ -53,16 +51,8 @@ colSums(is.na(df))
 ```
 
 ```{r}
-str(df)
-```
-
-```{r}
-summary(df)
-```
-
-```{r}
 names(df) <- trimws(names(df))
-print(names(df))
+names(df)
 ```
 
 ```{r}
@@ -83,10 +73,6 @@ df$`SWALLOWING DIFFICULTY` <- as.numeric(factor(df$`SWALLOWING DIFFICULTY`)) - 1
 df$`CHEST PAIN` <- as.numeric(factor(df$`CHEST PAIN`)) - 1
 
 df
-```
-
-```{r}
-str(df)
 ```
 
 ```{r}
@@ -299,7 +285,7 @@ tree_model_cv <- train(
   data = train_data_rose,
   method = "rpart",
   trControl = train_control,
-  tuneGrid = expand.grid(cp = seq(0.01, 0.1, by = 0.01))  # 调整复杂度参数
+  tuneGrid = expand.grid(cp = seq(0.01, 0.1, by = 0.01))
 )
 cat("\nDecision Tree Cross-Validation Results:\n")
 print(tree_model_cv)
@@ -390,10 +376,12 @@ svc_model <- ksvm(
   type = "C-svc",
   kernel = "rbfdot",
   C = 1,
-  prob.model = TRUE
+  prob.model = TRUE,
+  trControl = train_control
 )
 
 cat("\nSVC Model Trained Successfully.\n")
+print(svc_model)
 
 # Test Set Evaluation
 # Probability values for prediction categories
@@ -599,6 +587,127 @@ ggplot(roc_data, aes(x = FPR, y = TPR, color = Model)) +
 
 ```
 
+```{r}
+# Create a comparison table for test set accuracy and AUC
+comparison_table <- data.frame(
+  Model = c("Logistic Regression", 
+            "Decision Tree", 
+            "Random Forest", 
+            "Support Vector Classifier (SVC)", 
+            "Gaussian Naive Bayes", 
+            "K-Nearest Neighbor (KNN)", 
+            "XGBoost"),
+  Test_Set_Accuracy = c(test_accuracy, 
+                        test_accuracy_tree, 
+                        confusion_matrix_test_rf$overall["Accuracy"], 
+                        confusion_matrix_test_svc$overall["Accuracy"], 
+                        confusion_matrix_test_gnb$overall["Accuracy"], 
+                        confusion_matrix_test_knn$overall["Accuracy"], 
+                        confusion_matrix_test_xgb$overall["Accuracy"]),
+  Test_Set_AUC = c(auc_test, 
+                   auc_test_tree, 
+                   auc_test_rf, 
+                   auc_test_svc, 
+                   auc_test_gnb, 
+                   auc_test_knn, 
+                   auc_test_xgb)
+)
+
+# Print the comparison table
+print(comparison_table)
+```
+
+```{r}
+library(caret)
+library(pROC)
+
+# Function to calculate performance metrics: Accuracy, Recall, F1-score
+calculate_metrics <- function(y_true, y_pred) {
+  cm <- confusionMatrix(as.factor(y_pred), as.factor(y_true), positive = "1")
+  
+  accuracy <- cm$overall["Accuracy"]
+  recall <- cm$byClass["Sensitivity"]  # Recall/Sensitivity
+  precision <- cm$byClass["Pos Pred Value"]  # Precision
+  f1_score <- 2 * ((precision * recall) / (precision + recall))
+  
+  return(c(
+    Accuracy = round(accuracy, 4),
+    Recall = round(recall, 4),
+    F1_Score = round(f1_score, 4)
+  ))
+}
+
+# Placeholder to store metrics for each model
+results <- data.frame(
+  Model = character(),
+  Accuracy = numeric(),
+  Recall = numeric(),
+  F1_Score = numeric(),
+  stringsAsFactors = FALSE
+)
+
+# Logistic Regression
+lr_metrics <- calculate_metrics(y_test, y_test_pred)
+results <- rbind(results, c("Logistic Regression", lr_metrics))
+
+# Decision Tree
+tree_metrics <- calculate_metrics(y_test, y_test_pred_tree)
+results <- rbind(results, c("Decision Tree", tree_metrics))
+
+# Random Forest
+rf_metrics <- calculate_metrics(y_test, y_test_pred_rf)
+results <- rbind(results, c("Random Forest", rf_metrics))
+
+# Support Vector Classifier (SVC)
+svc_metrics <- calculate_metrics(y_test, y_test_pred_svc)
+results <- rbind(results, c("Support Vector Classifier", svc_metrics))
+
+# Gaussian Naive Bayes
+gnb_metrics <- calculate_metrics(y_test, y_test_pred_gnb)
+results <- rbind(results, c("Gaussian Naive Bayes", gnb_metrics))
+
+# K-Nearest Neighbor (KNN)
+knn_metrics <- calculate_metrics(y_test, y_test_pred_knn)
+results <- rbind(results, c("K-Nearest Neighbor", knn_metrics))
+
+# XGBoost
+xgb_metrics <- calculate_metrics(y_test, y_test_pred_xgb)
+results <- rbind(results, c("XGBoost", xgb_metrics))
+
+# Convert to data frame and set column names
+results <- as.data.frame(results)
+colnames(results) <- c("Model", "Precision", "Recall", "F1_Score")
+
+# Print the results
+print(results)
+
+```
+
+```{r}
+model_results <- list(
+  "Logistic Regression" = lr_model_cv$results,
+  "Decision Tree" = tree_model_cv$results,
+  "Random Forest" = rf_model_cv$results,
+  "Gaussian Naive Bayes" = gnb_model_cv$results,
+  "K-Nearest Neighbors" = knn_model_cv$results,
+  "XGBoost" = xgb_model_cv$results
+)
+
+# Combine results into a single data frame
+library(dplyr)
+combined_results <- bind_rows(
+  lapply(names(model_results), function(model_name) {
+    results <- model_results[[model_name]] %>%
+      select(Accuracy, Kappa)  # Keep only Accuracy and Kappa
+    results$model <- model_name  # Add a column to identify the model
+    return(results)
+  })
+)
+
+combined_results
+
+```
+
 ## Results {#sec-results}
 
 Initial Data Cleaning:
@@ -626,6 +735,10 @@ Resampling of training data:
 In order to achieve data balance during the data processing in this paper, the training set was resampled in both directions using the ROSE package, i.e., both oversampling and undersampling were performed to balance the category distribution. The resampling parameter p = 0.5 and the total sample size N = 1000 were set to ensure a more balanced category distribution. Output the resampled category distribution: Class Distribution After Resampling. 0: X 1: Y Reclassify the resampled data into independent variables (X_train_rose) and dependent variables (y_train_rose) to prepare for model training. In the cross-validation setup, the training process was evaluated using the K-Fold Cross-Validation) method. A 5-fold cross-validation was configured and verboseIter was enabled to monitor the training status for each iteration.
 
 In cross-validation, XGBoost and Random Forest achieved the highest cross-validation accuracies (98%), indicating strong performance during training. KNN with k=3 also performed very well (97.2% accuracy). In validation set, poor validation accuracies across most models suggest potential overfitting or issues with the validation split. In test set, XGBoost showed the best test accuracy (88.23%) and reasonable AUC (0.8703), demonstrating good generalization. The Decision Tree model achieved the highest AUC (0.9397), despite lower accuracy (13.23%). In conclusion, XGBoost and Random Forest models are the strongest performers based on cross-validation and test set metrics. Poor validation and test accuracies in other models highlight possible challenges in model generalization or dataset partitioning. Additional fine-tuning and adjustments, particularly for validation strategies, could further enhance performance.
+
+## Discussion
+
+This project contains a number of limitations. firstly category imbalance, as the proportion of positive cases in the dataset is as high as 86%, which may lead to predictive models favoring the majority of categories, thus affecting the predictive accuracy of the minority category (negative cases). Secondly potential problems with feature removal, where features such as gender, age and smoking were removed based on correlation analysis, which may have overlooked indirect or non-linear relationships between these variables and lung cancer, leading to a lack of comprehensiveness in the model in some cases. Secondly, there is the issue of overfitting, as the cross-validation accuracy of some models was significantly higher than the test set performance, which suggests that the models may be overfitted and fail to generalize well to new data. Finally, the dataset is based on a survey questionnaire, which may not be representative of a broad population. Due to the inclusion of demographic or sampling bias, its applicability may be limited by the diverse patient population, reducing the practical generalization value of the model.
 
 ## Conclusion
 

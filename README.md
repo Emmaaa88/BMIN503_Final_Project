@@ -3,6 +3,12 @@
 This README serves as a guide for navigating and understanding the code and documentation provided in the project.
 
 ---
+## Files
+- README.md: Introduction of the structure of the project.
+- survey lung cancer.csv: Data used for prediction.
+- final_project_template.qmd: The whole project code and description.
+- final_project_template.html: File rendered from the qmd file.
+
 
 ## Overview
 
@@ -23,7 +29,7 @@ The project aims to develop a machine learning-based lung cancer detection syste
 ### **2. Methods**
 - **Data Preprocessing**: Steps taken to clean and encode data.
 - **Feature Engineering**: Identification of relevant features for model building.
-- **Models**: Logistic regression, Decision Trees, and Random Forests implemented and evaluated.
+- **Models**: Logistic regression, Decision Trees, Random Forests and some more models implemented and evaluated.
 
 ### **3. Results**
 - Presentation of model performance on validation and test datasets.
